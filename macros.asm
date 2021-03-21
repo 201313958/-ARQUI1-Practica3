@@ -89,51 +89,112 @@ mov numero,al;por ultimo movemos el valor del numero a numero
 endm
 
 NumToAscii macro temp
-mov al, temp      
-aam                
-add ax, 3030h 
-push ax     
-mov dl, ah         
-mov ah, 02h        
-int 21h
-pop dx             
-mov ah, 02h        
-int 21h
+    mov al, temp      
+    aam                
+    add ax, 3030h 
+    push ax     
+    mov dl, ah         
+    mov ah, 02h        
+    int 21h
+    pop dx             
+    mov ah, 02h        
+    int 21h
 endm
 
 OpFactorial macro resultado, numero, cadena
-LOCAL Zero, Normal, fin
-    print cadena
-    mov al, numero
-    cmp al, 0
-        je Zero
-    mov cl, al
-	mov ax, 1
-	ciclo:
-        mul cl
-        push ax
-        xor ax,ax
+    LOCAL Zero, Normal, fin
+        print cadena
+        mov al, numero
+        cmp al, 0
+            je Zero
+        mov cl, al
+        mov ax, 1
+        ciclo:
+            mul cl
+            push ax
+            xor ax,ax
 
-        mov bl, cl
-        add cl, 48
-        mov dl, cl
-        mov ah, 02h               
-        int 21h
+            mov bl, cl
+            add cl, 48
+            mov dl, cl
+            mov ah, 02h               
+            int 21h
 
-        mov dl, 42
-        mov ah, 02h               
-        int 21h
-        mov cl,bl
+            mov dl, 42
+            mov ah, 02h               
+            int 21h
+            mov cl,bl
 
-        xor ax,ax
-        pop ax
-		
-	loop ciclo 
-    mov resultado[0], al
-    jmp fin   
+            xor ax,ax
+            pop ax
+            
+        loop ciclo 
+        mov resultado[0], al
+        jmp fin   
 
-    Zero:
-        mov resultado[0], 01
-        jmp fin
-    fin:	    
+        Zero:
+            mov resultado[0], 01
+            jmp fin
+        fin:	    
 endm
+
+Multi macro numero1, numero2, resultado
+mov al, numero1
+imul numero2
+mov resultado, al
+endm
+
+Divi macro numero1, numero2, resultado
+mov al, numero1
+idiv numero2
+mov resultado, al
+endm
+
+Ley_Signos macro signo1, signo2, signo_final, cadena
+    LOCAL menos, mas, menosXmenos, masXmas, masXmenos, menosXmas, fin
+    mov al, signo1
+    cmp al, -1
+        je menos
+    cmp al, 1
+        je mas
+    menos:
+        mov al, signo2
+        cmp al, -1  
+            je menosXmenos
+        cmp al, 1
+            je menosXmas
+    menosXmenos:
+        mov signo_final, 1
+        jmp fin
+    menosXmas:
+        mov signo_final, -1        
+        jmp fin
+    mas:
+        mov al, signo2
+        cmp al, -1  
+            je masXmenos
+        cmp al, 1
+            je masXmas 
+    masXmas:
+        mov signo_final, 1
+        jmp fin
+    masXmenos:
+        mov signo_final,-1
+        jmp fin
+    fin:
+endm
+
+SignoToAscii macro signo
+    LOCAL positivo,negativo,fin
+    mov al, signo
+    cmp signo, -1
+        je negativo
+    jmp positivo
+    positivo:
+        mov signo, 43
+        jmp fin
+    negativo:
+        mov signo, 45
+        jmp fin
+    fin:
+endm   

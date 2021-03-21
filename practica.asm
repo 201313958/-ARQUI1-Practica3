@@ -106,7 +106,7 @@ main proc
 		print cadena_ingreseop
 		print saltolinea
 		getChar
-		;mov ope[0], al
+		mov ope[0], al
 		;print ope
 		jmp Comp_Operacion		
 		jmp menu	
@@ -116,6 +116,8 @@ main proc
 		mov al,ope[0]
 		cmp al, 42
 			je Producto
+		cmp al, 47
+			je Division
 
 	Producto:
 		print cadena_ingresenum ;imprime la cadenna de ingrese numero
@@ -125,13 +127,27 @@ main proc
 		;print Num1
 		;print saltolinea
 		;print Num2
-		
-		mov al, Num1
-		imul Num2
-		mov Resultado, al
-		print Resultado
+
+		Multi Num1, Num2, Resultado
+		Ley_Signos Signo_Num1, Signo_Num2, Signo_Resultado, Cadena_Debu
+		SignoToAscii Signo_Resultado
+		print Signo_Resultado
+		NumToAscii Resultado
 		jmp menu
 
+	Division:
+		;print Cadena_Debu
+		print cadena_ingresenum ;imprime la cadenna de ingrese numero
+		print saltolinea; imprime uns salto de linea
+		ObtenerTexto cadena_entrante ; captura la cadena entrante
+		EsNegativo cadena_entrante, Num2, Signo_Num2, temp ; determina si es + o - y asigna el signo
+
+		Divi Num1, Num2, Resultado
+		Ley_Signos Signo_Num1, Signo_Num2, Signo_Resultado, Cadena_Debu
+		SignoToAscii Signo_Resultado
+		print Signo_Resultado
+		NumToAscii Resultado
+		jmp menu
 
 	factorial:
 		print msg_fact
