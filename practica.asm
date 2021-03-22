@@ -31,8 +31,8 @@ cadena_menucalc db 0ah,0dh, '********** Calc **********' , '$'
 cadena_ingresenum db 0ah,0dh, 'Ingrese un Numero(-99,99)' , '$'
 cadena_ingreseop db 0ah,0dh, 'Ingrese un operador' , '$'
 cadena_ingreseop2 db 0ah,0dh, 'Ingrese Un Operador o ; para finalizar' , '$'
-cadena_resultado db 0ah,0dh, '  El resultado fue' , '$'
-cadena_guardar db 0ah,0dh, '  Desea Guardar(S/N)' , '$'
+cadena_resultado db 0ah,0dh, '  El resultado fue: ' , '$'
+cadena_guardar db 0ah,0dh, '  Desea Guardar(s/n)' , '$'
 cadena_entrante db 10 dup('$'), '$'
 Num1 db 10 dup('$'), '$'
 Signo_Num1 db 10 dup('$'), '$'
@@ -109,7 +109,40 @@ main proc
 		mov ope[0], al
 		;print ope
 		jmp Comp_Operacion		
-		jmp menu	
+		jmp menu
+
+	Continuar:
+		mov bl, Resultado
+		mov Num1, bl
+		mov bl, Signo_Resultado
+		mov Signo_Num1, bl
+		;SignoToAscii Signo_Num1
+		;print Signo_Num1
+		;NumToAscii Num1
+		;print Num1
+		print cadena_ingreseop2
+		print saltolinea
+		getChar
+		mov ope[0], al
+		;print ope
+		jmp Comp_Operacion		
+		;jmp menu
+
+	fin_calc:	
+		print cadena_resultado
+		SignoToAscii Signo_Resultado
+		print Signo_Resultado
+		NumToAscii Resultado
+		print saltolinea
+		print cadena_guardar
+		getChar
+		print salto
+		cmp al, 115
+			je Almacenar
+		jmp menu
+
+	Almacenar:
+	jmp menu
 
 	Comp_Operacion:
 		xor al,al
@@ -122,6 +155,8 @@ main proc
 			je Suma
 		cmp al, 45
 			je Resta
+		cmp al, 59
+			je fin_calc
 
 	Resta:
 		print cadena_ingresenum ;imprime la cadenna de ingrese numero
@@ -130,10 +165,10 @@ main proc
 		EsNegativo cadena_entrante, Num2, Signo_Num2, temp ; determina si es + o - y asigna el signo
 		Restar Num1, Signo_Num1, Num2, Signo_Num2, Resultado, Signo_Resultado, Cadena_Debu
 
-		SignoToAscii Signo_Resultado
-		print Signo_Resultado
-		NumToAscii Resultado
-	jmp menu
+		;SignoToAscii Signo_Resultado
+		;print Signo_Resultado
+		;NumToAscii Resultado
+	jmp Continuar
 
 	Suma:
 		print cadena_ingresenum ;imprime la cadenna de ingrese numero
@@ -142,10 +177,10 @@ main proc
 		EsNegativo cadena_entrante, Num2, Signo_Num2, temp ; determina si es + o - y asigna el signo
 		Sumar Num1, Signo_Num1, Num2, Signo_Num2, Resultado, Signo_Resultado
 		
-		SignoToAscii Signo_Resultado
-		print Signo_Resultado
-		NumToAscii Resultado
-		jmp menu
+		;SignoToAscii Signo_Resultado
+		;print Signo_Resultado
+		;NumToAscii Resultado
+		jmp Continuar
 
 	Producto:
 		print cadena_ingresenum ;imprime la cadenna de ingrese numero
@@ -155,10 +190,11 @@ main proc
 
 		Multi Num1, Num2, Resultado
 		Ley_Signos Signo_Num1, Signo_Num2, Signo_Resultado
-		SignoToAscii Signo_Resultado
-		print Signo_Resultado
-		NumToAscii Resultado
-		jmp menu
+		
+		;SignoToAscii Signo_Resultado
+		;print Signo_Resultado
+		;NumToAscii Resultado
+		jmp Continuar
 
 	Division:
 		;print Cadena_Debu
@@ -169,10 +205,11 @@ main proc
 
 		Divi Num1, Num2, Resultado
 		Ley_Signos Signo_Num1, Signo_Num2, Signo_Resultado
-		SignoToAscii Signo_Resultado
-		print Signo_Resultado
-		NumToAscii Resultado
-		jmp menu
+		
+		;SignoToAscii Signo_Resultado
+		;print Signo_Resultado
+		;NumToAscii Resultado
+		jmp Continuar
 
 	factorial:
 		print msg_fact
