@@ -118,18 +118,43 @@ main proc
 			je Producto
 		cmp al, 47
 			je Division
+		cmp al, 43
+			je Suma
+		cmp al, 45
+			je Resta
+
+	Resta:
+		print cadena_ingresenum ;imprime la cadenna de ingrese numero
+		print saltolinea; imprime uns salto de linea
+		ObtenerTexto cadena_entrante ; captura la cadena entrante
+		EsNegativo cadena_entrante, Num2, Signo_Num2, temp ; determina si es + o - y asigna el signo
+		Restar Num1, Signo_Num1, Num2, Signo_Num2, Resultado, Signo_Resultado, Cadena_Debu
+
+		SignoToAscii Signo_Resultado
+		print Signo_Resultado
+		NumToAscii Resultado
+	jmp menu
+
+	Suma:
+		print cadena_ingresenum ;imprime la cadenna de ingrese numero
+		print saltolinea; imprime uns salto de linea
+		ObtenerTexto cadena_entrante ; captura la cadena entrante
+		EsNegativo cadena_entrante, Num2, Signo_Num2, temp ; determina si es + o - y asigna el signo
+		Sumar Num1, Signo_Num1, Num2, Signo_Num2, Resultado, Signo_Resultado
+		
+		SignoToAscii Signo_Resultado
+		print Signo_Resultado
+		NumToAscii Resultado
+		jmp menu
 
 	Producto:
 		print cadena_ingresenum ;imprime la cadenna de ingrese numero
 		print saltolinea; imprime uns salto de linea
 		ObtenerTexto cadena_entrante ; captura la cadena entrante
 		EsNegativo cadena_entrante, Num2, Signo_Num2, temp ; determina si es + o - y asigna el signo
-		;print Num1
-		;print saltolinea
-		;print Num2
 
 		Multi Num1, Num2, Resultado
-		Ley_Signos Signo_Num1, Signo_Num2, Signo_Resultado, Cadena_Debu
+		Ley_Signos Signo_Num1, Signo_Num2, Signo_Resultado
 		SignoToAscii Signo_Resultado
 		print Signo_Resultado
 		NumToAscii Resultado
@@ -143,7 +168,7 @@ main proc
 		EsNegativo cadena_entrante, Num2, Signo_Num2, temp ; determina si es + o - y asigna el signo
 
 		Divi Num1, Num2, Resultado
-		Ley_Signos Signo_Num1, Signo_Num2, Signo_Resultado, Cadena_Debu
+		Ley_Signos Signo_Num1, Signo_Num2, Signo_Resultado
 		SignoToAscii Signo_Resultado
 		print Signo_Resultado
 		NumToAscii Resultado

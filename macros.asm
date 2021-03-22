@@ -150,7 +150,98 @@ idiv numero2
 mov resultado, al
 endm
 
-Ley_Signos macro signo1, signo2, signo_final, cadena
+Sumar macro numero1, signo1, numero2, signo2, res, signo_res
+    LOCAL fin, negativo
+    NumeroconSigno numero1, signo1
+    NumeroconSigno numero2, signo2
+    mov al, numero1
+    add al, numero2
+    mov res, al
+    cmp al, 0
+        jl negativo
+    mov signo_res, 1
+    jmp fin
+
+    negativo:
+        neg al
+        mov res, al
+        mov signo_res, -1
+        jmp fin
+    fin:
+    ;retornar el numero y signo por separado
+endm
+
+NumeroconSigno macro numero, signo
+    LOCAL negativo, fin
+    mov al, signo
+    cmp al, -1
+        je negativo
+    jmp fin
+    negativo:
+        mov al, numero
+        neg al
+        mov numero, al
+        jmp fin
+    fin:
+endm
+
+Restar macro numero1, signo1, numero2, signo2, res, signo_res, cadena
+LOCAL resta, suma, negativo, fin
+    ley_signos_Resta signo2
+    mov al, signo2
+    cmp al, -1
+        je resta
+    jmp suma
+
+    resta:
+        NumeroconSigno numero1, signo1
+        NumeroconSigno numero2, signo2
+        mov al, numero1
+        add al, numero2
+        mov res, al
+        cmp al, 0
+            jl negativo
+        mov signo_res, 1
+    jmp fin
+
+    negativo:
+        mov al, res
+        neg al
+        mov res, al
+        mov signo_res, -1
+    jmp fin
+
+    suma:
+        NumeroconSigno numero1, signo1
+        NumeroconSigno numero2, signo2
+        mov al, numero1
+        add al, numero2
+        mov res, al
+        cmp al, 0
+            jl negativo
+        mov signo_res, 1
+        jmp fin
+    jmp fin
+    fin:
+endm
+
+ley_signos_Resta macro signo
+LOCAL menosXmenos, menosXmas, fin
+    mov al, signo
+    cmp al, -1
+        je menosXmenos
+    cmp al, 1
+        je menosXmas
+    menosXmenos:
+        mov signo, 1
+        jmp fin
+    menosXmas:
+        mov signo, -1 
+        jmp fin
+    fin:
+endm
+
+Ley_Signos macro signo1, signo2, signo_final
     LOCAL menos, mas, menosXmenos, masXmas, masXmenos, menosXmas, fin
     mov al, signo1
     cmp al, -1
