@@ -20,20 +20,20 @@ endm
 ObtenerTexto macro cadena ;macro para recibir una cadena, varios caracteres 
 
 LOCAL ObtenerChar, endTexto 
-;si, cx, di  registros que usualmente se usan como contadores 
-    xor si,si  ; => mov si, 0  reinica el contador
+;, cx, di  registros que usualmente se usan como contadores 
+    xor di,di  ; => mov di, 0  reinica el contador
 
     ObtenerChar:
         getChar  ;llamamos al método de obtener caracter 
-        cmp al, 0dh ; como se guarda en al, comparo si al es igual a salto de línea, ascii de salto de linea en hexadecimal o 10en ascii
-        je endTexto ;si es igual que el salto de línea, nos vamos a la etiqueta endTexto, donde agregamos el $ de dolar a la entrada 
-        mov cadena[si],al ; mov destino, fuente.  Vamos copiando el ascii del caracter que se guardó en al, al vector cadena en la posicion del contador si
-        inc si ; => si = si+1
+        cmp al, 0dh ; como se guarda en al, comparo di al es igual a salto de línea, ascii de salto de linea en hexadecimal o 10en ascii
+        je endTexto ;di es igual que el salto de línea, nos vamos a la etiqueta endTexto, donde agregamos el $ de dolar a la entrada 
+        mov cadena[di],al ; mov destino, fuente.  Vamos copiando el ascii del caracter que se guardó en al, al vector cadena en la posicion del contador di
+        inc di ; => di = di+1
         jmp ObtenerChar
 
     endTexto:
         mov al, 36 ;ascii del signo $ o en hexadecimal 24h
-        mov cadena[si],al  ;copiamos el $ a la cadena
+        mov cadena[di],al  ;copiamos el $ a la cadena
 endm
 
 EsNegativo macro cadena, numero, signo, temp
@@ -289,3 +289,77 @@ SignoToAscii macro signo
         jmp fin
     fin:
 endm   
+
+IncContador macro numero
+    mov al, numero
+    add al, 1
+    mov numero, al
+    xor al,al
+endm
+
+limpiar macro buffer, numbytes, caracter
+LOCAL Repetir
+	xor di,di ; colocamos en 0 el contador di
+	xor cx,cx ; colocamos en 0 el contador cx
+	mov	cx,numbytes ;le pasamos a cx el tamaño del arreglo a limpiar 
+
+	Repetir:
+		mov buffer[di], caracter ;le asigno el caracter que le estoy mandando 
+		inc di ;incremento di
+		Loop Repetir ;se va a repetir hasta que cx sea 0 
+endm
+
+crear macro buffer, handler
+	
+	mov ah,3ch ;función para crear fichero
+	mov cx,00h ;fichero normal 
+	lea dx,buffer ;carga la dirección de la variable buffer a dx
+	int 21h
+	mov handler, ax ;sino hubo error nos devuelve el handler 
+
+endm
+
+escribir macro handler, buffer, numbytes
+
+	mov ah, 40h ;función de escritura del archivo 
+	mov bx, handler ;en bx copiamos el handler, 
+	mov cx, numbytes ;numero de bytes a escribit 
+	lea dx, buffer ;carga la dirección de la variable buffer a dx
+	int 21h ;ejecutamos la interrupción 
+
+endm
+
+cerrar macro handler
+	
+	mov ah,3eh
+	mov bx, handler
+	int 21h
+	mov handler,ax
+
+endm
+
+limpiar macro buffer, numbytes, caracter
+LOCAL Repetir
+	xor di,di ; colocamos en 0 el contador di
+	xor cx,cx ; colocamos en 0 el contador cx
+	mov	cx,numbytes ;le pasamos a cx el tamaño del arreglo a limpiar 
+
+	Repetir:
+		mov buffer[di], caracter ;le asigno el caracter que le estoy mandando 
+		inc di ;incremento di
+		Loop Repetir ;se va a repetir hasta que cx sea 0 
+endm
+
+Concatenar_Encabezado_HTML macro destino, fuente
+    LOCAL LeerCaracter, FinCadena ;si, cx, di  registros que usualmente se usan como contadores 
+    xor di, di
+    LeerCaracter:
+        mov al, fuente[di]
+        cmp al, 64
+            je FinCadena
+        mov destino[si], al
+        inc si
+        inc di
+        jmp LeerCaracter        
+    FinCadena:
+endm

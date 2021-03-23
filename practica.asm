@@ -33,6 +33,7 @@ cadena_ingreseop db 0ah,0dh, 'Ingrese un operador' , '$'
 cadena_ingreseop2 db 0ah,0dh, 'Ingrese Un Operador o ; para finalizar' , '$'
 cadena_resultado db 0ah,0dh, '  El resultado fue: ' , '$'
 cadena_guardar db 0ah,0dh, '  Desea Guardar(s/n)' , '$'
+cadena_MaxOpe db 0ah,0dh, 'HA REALIZADO EL MAXIMO DE OPERACIONES PERMITIDAS' , '$'
 cadena_entrante db 10 dup('$'), '$'
 Num1 db 10 dup('$'), '$'
 Signo_Num1 db 10 dup('$'), '$'
@@ -42,6 +43,7 @@ Resultado db 10 dup('$'), '$'
 Signo_Resultado db 10 dup('$'), '$'
 ope db 10 dup('$'), '$'
 temp db 10 dup('$'), '$'
+contador_operandos db 0
 
 ;Variables para factorial
 msg_fact db 0ah,0dh, 'Ingrese un numero(0-4): ', '$'
@@ -51,7 +53,24 @@ fact_res_ascii db 3 dup('$'), '$'
 fact_res db 16 dup('$'), '$'
 cadena_fact db 40 dup('$'), '$'
 
-
+;Variables para Creacion y Escritura de archivos
+bufferentrada db 'Reporte.html'
+handlerentrada dw ?
+bufferInformacion db 800 dup(' ')
+Contador_buffer db 0
+cadena_reporte1 db '<html><header><h1 align="center">Practica 3 Arqui 1 Seccion B</h1>@'
+cadena_reporte2 db '<p style="font-size:20px" align="center"><b>Nombre:</b> Jose Pablo Valiente Montes</p>@'
+cadena_reporte3 db '<p style="font-size:20px" align="center"><b>Carne:</b> 201313958</p>@'
+cadena_reporte4 db '<p style="font-size:20px" align="center"><b>Fecha:</b>@'
+cadena_reporte5 db '<script align="center">var f = new Date();@'
+cadena_reporte6 db 'document.write(f.getDate() + "/" + (f.getMonth() +1) + "/" + f.getFullYear());@'
+cadena_reporte7 db '</script></p>@'
+cadena_reporte8 db '<p style="font-size:20px" align="center"><b>Hora:</b>@'
+cadena_reporte9 db '<script align="center">var f = new Date();@'
+cadena_reporte10 db 'document.write(f.getHours() + ":" + f.getMinutes());@'
+cadena_reporte12 db '</script></p>@'
+cadena_reporte13 db '</header><body><table border="1" align="center"><tbody>@'
+cadena_reporte14 db '</tbody></table></body></html>@'
 
 ;----------------SEGMENTO DE CODIGO---------------------
 
@@ -70,6 +89,21 @@ main proc
 		print encabezado7
 		print encabezado8
 		print saltolinea
+		limpiar bufferInformacion, SIZEOF bufferInformacion,24h
+		xor si, si
+		Concatenar_Encabezado_HTML bufferInformacion, cadena_reporte1
+		Concatenar_Encabezado_HTML bufferInformacion, cadena_reporte2
+		Concatenar_Encabezado_HTML bufferInformacion, cadena_reporte3
+		Concatenar_Encabezado_HTML bufferInformacion, cadena_reporte4
+		Concatenar_Encabezado_HTML bufferInformacion, cadena_reporte5
+		Concatenar_Encabezado_HTML bufferInformacion, cadena_reporte6
+		Concatenar_Encabezado_HTML bufferInformacion, cadena_reporte7
+		Concatenar_Encabezado_HTML bufferInformacion, cadena_reporte8
+		Concatenar_Encabezado_HTML bufferInformacion, cadena_reporte9
+		Concatenar_Encabezado_HTML bufferInformacion, cadena_reporte10
+		Concatenar_Encabezado_HTML bufferInformacion, cadena_reporte12
+		Concatenar_Encabezado_HTML bufferInformacion, cadena_reporte13
+		;Concatenar_Encabezado_HTML bufferInformacion, cadena_reporte14
 		jmp menu	
 	menu:
 		print cadena_menu1
@@ -89,7 +123,7 @@ main proc
 		cmp al,51 ;mnemonio 33h = 3 en hexadecimal, ascii 51
 			je factorial
 		cmp al,52 ;mnemonio 34h = 4 en hexadecimal, ascii 52
-			;je crear_reporte
+			je Crear_Reporte
 		cmp al,53 ;mnemonio 34h = 5 en hexadecimal, ascii 52
 			je salir
 		jmp menu
@@ -120,6 +154,9 @@ main proc
 		;print Signo_Num1
 		;NumToAscii Num1
 		;print Num1
+		mov al,contador_operandos
+		cmp al, 10
+			je Max_Ope
 		print cadena_ingreseop2
 		print saltolinea
 		getChar
@@ -128,21 +165,32 @@ main proc
 		jmp Comp_Operacion		
 		;jmp menu
 
-	fin_calc:	
+	fin_calc:
+		mov contador_operandos, 0
 		print cadena_resultado
 		SignoToAscii Signo_Resultado
 		print Signo_Resultado
 		NumToAscii Resultado
 		print saltolinea
 		print cadena_guardar
-		getChar
-		print salto
+		print saltolinea
+		getChar		
 		cmp al, 115
-			je Almacenar
+			;je Crear_Reporte
 		jmp menu
 
-	Almacenar:
+	Crear_Reporte: 
+		crear bufferentrada, handlerentrada
+		escribir  handlerentrada, bufferInformacion, SIZEOF bufferInformacion
+		cerrar handlerentrada
 	jmp menu
+
+	Max_Ope:
+		print saltolinea
+		print cadena_MaxOpe
+		print saltolinea
+		mov contador_operandos, 0
+	jmp fin_calc
 
 	Comp_Operacion:
 		xor al,al
@@ -165,6 +213,7 @@ main proc
 		EsNegativo cadena_entrante, Num2, Signo_Num2, temp ; determina si es + o - y asigna el signo
 		Restar Num1, Signo_Num1, Num2, Signo_Num2, Resultado, Signo_Resultado, Cadena_Debu
 
+		IncContador contador_operandos
 		;SignoToAscii Signo_Resultado
 		;print Signo_Resultado
 		;NumToAscii Resultado
@@ -177,6 +226,7 @@ main proc
 		EsNegativo cadena_entrante, Num2, Signo_Num2, temp ; determina si es + o - y asigna el signo
 		Sumar Num1, Signo_Num1, Num2, Signo_Num2, Resultado, Signo_Resultado
 		
+		IncContador contador_operandos
 		;SignoToAscii Signo_Resultado
 		;print Signo_Resultado
 		;NumToAscii Resultado
@@ -191,6 +241,7 @@ main proc
 		Multi Num1, Num2, Resultado
 		Ley_Signos Signo_Num1, Signo_Num2, Signo_Resultado
 		
+		IncContador contador_operandos
 		;SignoToAscii Signo_Resultado
 		;print Signo_Resultado
 		;NumToAscii Resultado
@@ -203,6 +254,7 @@ main proc
 		ObtenerTexto cadena_entrante ; captura la cadena entrante
 		EsNegativo cadena_entrante, Num2, Signo_Num2, temp ; determina si es + o - y asigna el signo
 
+		IncContador contador_operandos
 		Divi Num1, Num2, Resultado
 		Ley_Signos Signo_Num1, Signo_Num2, Signo_Resultado
 		
@@ -221,13 +273,6 @@ main proc
 		NumToAscii fact_res
 		jmp menu
 
-	crear_reporte:
-		mov cx,5 ;siemre en el uso de loop, cx, lleva el contador de las veces que se va a repetir el loop 
-
-		Mientras:
-			print mensaje ;imprime el mensaje 
-			Loop Mientras ;lo lleva a la etiqueta mientras pero decrementa cx 
-			jmp menu ; y cuando cx ya es 0 , avanza y ejecuta este jmp 
 	salir:
 		close
 main endp
