@@ -93,10 +93,15 @@ NumToAscii macro temp
     aam                
     add ax, 3030h 
     push ax     
-    mov dl, ah         
+    mov dl, ah 
+    ;En dl estan las decenas     
+    mov temp[0],dl   
     mov ah, 02h        
     int 21h
-    pop dx             
+    pop dx
+    ; en dl esta en unidades 
+    mov temp[1], dl
+    mov temp[2], 36            
     mov ah, 02h        
     int 21h
 endm
@@ -355,7 +360,7 @@ Concatenar_Encabezado_HTML macro destino, fuente
     xor di, di
     LeerCaracter:
         mov al, fuente[di]
-        cmp al, 64
+        cmp al, 36
             je FinCadena
         mov destino[si], al
         inc si
