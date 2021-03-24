@@ -345,6 +345,7 @@ endm
 
 limpiar macro buffer, numbytes, caracter
 LOCAL Repetir
+    push di
 	xor di,di ; colocamos en 0 el contador di
 	xor cx,cx ; colocamos en 0 el contador cx
 	mov	cx,numbytes ;le pasamos a cx el tamaño del arreglo a limpiar 
@@ -353,6 +354,8 @@ LOCAL Repetir
 		mov buffer[di], caracter ;le asigno el caracter que le estoy mandando 
 		inc di ;incremento di
 		Loop Repetir ;se va a repetir hasta que cx sea 0 
+    xor di,di
+    pop di
 endm
 
 Concatenar_Encabezado_HTML macro destino, fuente

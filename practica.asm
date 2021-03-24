@@ -57,7 +57,7 @@ cadena_fact db 40 dup('$'), '$'
 ingreseruta db 0ah,0dh, 'Ingrese una ruta de archivo' , 0ah,0dh, 'Ejemplo: entrada.arq' , '$'
 bufferentrada1 db 50 dup('$')
 handlerentrada1 dw ?
-bufferInformacion1 db 3000 dup('$')
+bufferInformacion1 db 20000 dup('$')
 err1 db 0ah,0dh, 'Error al abrir el archivo puede que no exista' , '$'
 err5 db 0ah,0dh, 'Error al leer en el archivo' , '$'
 Etiqueta_operacion db 15 dup ('$')
@@ -70,7 +70,7 @@ Debug db 20 dup ('$')
 ;Variables para Creacion y Escritura de archivos
 bufferentrada db 'Reporte.html'
 handlerentrada dw ?
-bufferInformacion db 4000 dup(' ')
+bufferInformacion db 20000 dup(' ')
 Contador_operaciones db 1 , '$'
 cadena_reporte1 db '<html><header><h1 align="center">Practica 3 Arqui 1 Seccion B</h1>$'
 cadena_reporte2 db '<p style="font-size:20px" align="center"><b>Nombre:</b> Jose Pablo Valiente Montes</p>$'
@@ -176,34 +176,47 @@ main proc
 		leer handlerentrada1, bufferInformacion1, SIZEOF bufferInformacion1 ;leemos el archivo 
 
 		;jmp Leer_XML
-		print saltolinea
-		print bufferInformacion1
-		print saltolinea
-		getChar
+		;print saltolinea
+		;print bufferInformacion1
+		;print saltolinea
+		;getChar
 		xor di,di
 		jmp Leer_XML
 
 	Continuar_XML:
 		inc di
 		mov al, bufferInformacion1[di]
-		cmp al, 83
+		cmp al, 83 ;S
 			je XML_Encontrar_Etiqueta
-		cmp al, 115
+		cmp al, 115 ;s
 			je XML_Encontrar_Etiqueta
-		cmp al, 82
+		cmp al, 82 ;R
 			je XML_Encontrar_Etiqueta
-		cmp al, 114
+		cmp al, 114 ;r
 			je XML_Encontrar_Etiqueta
-		cmp al,77
+		cmp al,77 ;M
 			je XML_Encontrar_Etiqueta
-		cmp al, 109
+		cmp al, 109 ;m
 			je XML_Encontrar_Etiqueta
-		cmp al, 86
+		cmp al, 68 ;D
 			je XML_Encontrar_Etiqueta
-		cmp al, 118
+		cmp al, 100 ;d
 			je XML_Encontrar_Etiqueta
-		;print Etiqueta_operando
-		jmp XML_Reporte_Operandos
+		cmp al, 86 ;V
+			je XML_Encontrar_Etiqueta
+		cmp al, 118 ;v
+			je XML_Encontrar_Etiqueta
+		cmp al, 79 ;O, Va a verificar si es la etiqueta final
+			je XML_Etiqueta_Cierre
+		;jmp XML_Reporte_Operandos
+
+	XML_Etiqueta_Cierre:
+		inc di
+		mov al, bufferInformacion1[di]
+		cmp al, 80 ;P Sabe que es la etiqueta de Cierre
+			je menu
+		jmp XML_Reporte_Operandos;XML_Encontrar_Etiqueta
+
 
 	XML_Reporte_Operandos:
 		xor si,si
@@ -214,7 +227,26 @@ main proc
 		pop di
 		push si
 		xor si, si
-		jmp menu
+		limpiar Etiqueta_operando, SIZEOF Etiqueta_operando,24h
+		limpiar Comparador, SIZEOF Comparador,24h
+		jmp XML_Reporte_Resultado
+
+	XML_Reporte_Resultado:
+		mov Debug[0],78
+		mov Debug[1],65
+		mov Debug[2],67
+		xor si,si
+		pop si
+		push di	
+		Concatenar_Encabezado_HTML bufferInformacion, cadena_Tabla1
+		Concatenar_Encabezado_HTML bufferInformacion, Debug
+		Concatenar_Encabezado_HTML bufferInformacion, cadena_Tabla2
+		xor di,di
+		pop di
+		push si
+		xor si, si
+		limpiar Debug, SIZEOF Debug,24h
+		jmp XML_Encontrar_Etiqueta
 
 	Leer_XML:
 		mov al, bufferInformacion1[di]
@@ -247,6 +279,10 @@ main proc
 			je XML_Multi
 		cmp al, 109
 			je XML_Multi
+		cmp al, 68
+			je XML_Div
+		cmp al, 100
+			je XML_Div
 		cmp al, 86
 			je XML_Valor
 		cmp al, 118
@@ -258,8 +294,28 @@ main proc
 
 	XML_Valor:
 		mov al, bufferInformacion1[di]	
-		cmp al, 58
-			jl XML_Concatenar_Numero
+		cmp al, 45
+			je XML_Concatenar_Numero
+		cmp al, 48
+			je XML_Concatenar_Numero
+		cmp al, 49
+			je XML_Concatenar_Numero
+		cmp al, 50
+			je XML_Concatenar_Numero
+		cmp al, 51
+			je XML_Concatenar_Numero
+		cmp al, 52
+			je XML_Concatenar_Numero
+		cmp al, 53
+			je XML_Concatenar_Numero
+		cmp al, 54
+			je XML_Concatenar_Numero
+		cmp al, 55
+			je XML_Concatenar_Numero	
+		cmp al, 56
+			je XML_Concatenar_Numero
+		cmp al, 57
+			je XML_Concatenar_Numero							
 		cmp al, 60
 			je XML_Encontrada
 		inc di
@@ -270,13 +326,21 @@ main proc
 	XML_Concatenar_Numero:
 		mov al, bufferInformacion1[di]	
 		cmp al, 60
-			je XML_Encontrar_Etiqueta
+			je XML_AgregarEspacio
 		mov Etiqueta_operando[si], al
 		inc di
 		inc si
 		;print Etiqueta_operando
 		;jmp menu
 		jmp XML_Concatenar_Numero
+
+	XML_AgregarEspacio:
+		mov Etiqueta_operando[si], 32
+		inc si
+		;mov al, Etiqueta_operando[si]
+		;mov Debug, al
+		;print Debug
+	jmp XML_Encontrar_Etiqueta
 
 	XML_Suma:
 		mov al, bufferInformacion1[di]	
@@ -319,10 +383,19 @@ main proc
 		jmp XML_Encontrar_Etiqueta
 
 	XML_Div:
-		jmp menu
+		mov al, bufferInformacion1[di]
+		cmp al, 62
+			je XML_Concatenar_Divi
+		inc di
+		jmp XML_Div
+
+	XML_Concatenar_Divi:
+		mov Etiqueta_operando[si],47
+		inc si
+		jmp XML_Encontrar_Etiqueta
 
 	XML_Operacion:	
-		mov al, bufferInformacion1[di]
+		mov al, bufferInformacion1[di]	
 		mov Comparador[si],al		
 		cmp al, 62
 			je XML_Reporte_Operacion
