@@ -53,11 +53,25 @@ fact_res_ascii db 3 dup('$'), '$'
 fact_res db 16 dup('$'), '$'
 cadena_fact db 40 dup('$'), '$'
 
+;Variables para la carga de XML
+ingreseruta db 0ah,0dh, 'Ingrese una ruta de archivo' , 0ah,0dh, 'Ejemplo: entrada.arq' , '$'
+bufferentrada1 db 50 dup('$')
+handlerentrada1 dw ?
+bufferInformacion1 db 3000 dup('$')
+err1 db 0ah,0dh, 'Error al abrir el archivo puede que no exista' , '$'
+err5 db 0ah,0dh, 'Error al leer en el archivo' , '$'
+Etiqueta_operacion db 15 dup ('$')
+Etiqueta_operando db 50 dup ('$')
+Comparador db 20 dup ('$')
+
+Debug db 20 dup ('$')
+
+
 ;Variables para Creacion y Escritura de archivos
 bufferentrada db 'Reporte.html'
 handlerentrada dw ?
 bufferInformacion db 4000 dup(' ')
-Contador_operaciones db 1
+Contador_operaciones db 1 , '$'
 cadena_reporte1 db '<html><header><h1 align="center">Practica 3 Arqui 1 Seccion B</h1>$'
 cadena_reporte2 db '<p style="font-size:20px" align="center"><b>Nombre:</b> Jose Pablo Valiente Montes</p>$'
 cadena_reporte3 db '<p style="font-size:20px" align="center"><b>Carne:</b> 201313958</p>$'
@@ -89,6 +103,8 @@ cadena_Operacion14 db '<tr><td>Operacion14</td><td>$'
 cadena_Operacion15 db '<tr><td>Operacion15</td><td>$'
 cadena_Tabla1 db '</td><td>$'
 cadena_Tabla2 db '</td></tr>$'
+Cadena_IniOpe db '<tr><td>$'
+Cadena_FinOpe db '</td><td>$'
 cadena_OperadorHTML db 10 dup('$'), '$'
 
 ;----------------SEGMENTO DE CODIGO---------------------
@@ -123,7 +139,8 @@ main proc
 		Concatenar_Encabezado_HTML bufferInformacion, cadena_reporte12
 		Concatenar_Encabezado_HTML bufferInformacion, cadena_reporte13
 		Concatenar_Encabezado_HTML bufferInformacion, cadena_reporte14
-		Concatenar_Encabezado_HTML bufferInformacion, cadena_Operacion1
+		;Concatenar_Encabezado_HTML bufferInformacion, cadena_Operacion1
+		push si
 		jmp menu	
 	menu:
 		print cadena_menu1
@@ -137,9 +154,9 @@ main proc
 		getChar
         ;cmp para comparar 
 		cmp al,49 ;mnemonio 31h = 1 en hexadecimal, ascii 49
-			;je carga_archivos
+			je carga_archivos
 		cmp al,50 ;mnemonio 32h = 2 en hexadecimal, ascii 50
-			je menu_calc
+			je menu_calc1
 		cmp al,51 ;mnemonio 33h = 3 en hexadecimal, ascii 51
 			je factorial
 		cmp al,52 ;mnemonio 34h = 4 en hexadecimal, ascii 52
@@ -149,22 +166,213 @@ main proc
 		jmp menu
 
 	carga_archivos: 
+		print saltolinea
+		print ingreseruta
+		print saltolinea
+		limpiar bufferentrada1, SIZEOF bufferentrada1,24h
+		obtenerRuta bufferentrada1
+		abrir bufferentrada1,handlerentrada1  ;le mandamos la ruta y el handler,que será la referencia al fichero 
+		limpiar bufferInformacion1, SIZEOF bufferInformacion1,24h  ;limpiamos la variable donde guardaremos los datos del archivo 
+		leer handlerentrada1, bufferInformacion1, SIZEOF bufferInformacion1 ;leemos el archivo 
+
+		;jmp Leer_XML
+		print saltolinea
+		print bufferInformacion1
+		print saltolinea
+		getChar
+		xor di,di
+		jmp Leer_XML
+
+	Continuar_XML:
+		inc di
+		mov al, bufferInformacion1[di]
+		cmp al, 83
+			je XML_Encontrar_Etiqueta
+		cmp al, 115
+			je XML_Encontrar_Etiqueta
+		cmp al, 82
+			je XML_Encontrar_Etiqueta
+		cmp al, 114
+			je XML_Encontrar_Etiqueta
+		cmp al,77
+			je XML_Encontrar_Etiqueta
+		cmp al, 109
+			je XML_Encontrar_Etiqueta
+		cmp al, 86
+			je XML_Encontrar_Etiqueta
+		cmp al, 118
+			je XML_Encontrar_Etiqueta
+		;print Etiqueta_operando
+		jmp XML_Reporte_Operandos
+
+	XML_Reporte_Operandos:
+		xor si,si
+		pop si
+		push di	
+		Concatenar_Encabezado_HTML bufferInformacion, Etiqueta_operando
+		xor di,di
+		pop di
+		push si
+		xor si, si
 		jmp menu
 
+	Leer_XML:
+		mov al, bufferInformacion1[di]
+		cmp al, 62
+			je XML_Encontrar_Etiqueta
+		inc di
+		jmp Leer_XML
+
+	XML_Encontrar_Etiqueta:
+		mov al, bufferInformacion1[di]
+		cmp al, 60 ;Encontar la primer etiqueta <
+			je XML_Encontrada
+		inc di
+		jmp XML_Encontrar_Etiqueta
+
+	XML_Encontrada:		
+		inc di
+		mov al, bufferInformacion1[di]
+		cmp al, 47
+			je Continuar_XML;XML_Encontrar_Etiqueta
+		cmp al, 83
+			je XML_Suma
+		cmp al, 115
+			je XML_Suma
+		cmp al, 82
+			je XML_Resta
+		cmp al, 114
+			je XML_Resta
+		cmp al,77
+			je XML_Multi
+		cmp al, 109
+			je XML_Multi
+		cmp al, 86
+			je XML_Valor
+		cmp al, 118
+			je XML_Valor
+		xor si,si
+		jmp XML_Operacion
+		;mov Comparador[si], al
+		;print Comparador
+
+	XML_Valor:
+		mov al, bufferInformacion1[di]	
+		cmp al, 58
+			jl XML_Concatenar_Numero
+		cmp al, 60
+			je XML_Encontrada
+		inc di
+		;mov Debug, al
+		;print Debug
+		jmp XML_Valor
+	
+	XML_Concatenar_Numero:
+		mov al, bufferInformacion1[di]	
+		cmp al, 60
+			je XML_Encontrar_Etiqueta
+		mov Etiqueta_operando[si], al
+		inc di
+		inc si
+		;print Etiqueta_operando
+		;jmp menu
+		jmp XML_Concatenar_Numero
+
+	XML_Suma:
+		mov al, bufferInformacion1[di]	
+		cmp al, 62
+			je XML_Concatenar_Suma
+		inc di
+		jmp XML_Suma
+
+	XML_Concatenar_Suma:
+		mov Etiqueta_operando[si], 43	;EJECUTAR EL CODIGO, SEGUIR CON NUMERO Y OTRAS COSAS
+		;print Etiqueta_operando
+		inc si
+		jmp XML_Encontrar_Etiqueta
+
+	
+	XML_Resta:
+		mov al, bufferInformacion1[di]
+		cmp al,62
+			je XML_Concatenar_Resta
+		inc di
+		jmp XML_Resta
+
+	XML_Concatenar_Resta:
+		mov Etiqueta_operando[si], 45
+		;print Etiqueta_operando
+		inc si
+		jmp XML_Encontrar_Etiqueta
+
+	XML_Multi:
+		mov al, bufferInformacion1[di]
+		cmp al, 62
+			je XML_Concatenar_Multi
+		inc di
+		jmp XML_Multi
+	
+	XML_Concatenar_Multi:
+		mov Etiqueta_operando[si],42
+		;print Etiqueta_operando
+		inc si
+		jmp XML_Encontrar_Etiqueta
+
+	XML_Div:
+		jmp menu
+
+	XML_Operacion:	
+		mov al, bufferInformacion1[di]
+		mov Comparador[si],al		
+		cmp al, 62
+			je XML_Reporte_Operacion
+		inc di
+		inc si
+		jmp XML_Operacion		
+	
+	XML_Reporte_Operacion:
+		mov Comparador[si], 36
+		xor si,si
+		pop si
+		push di
+		Concatenar_Encabezado_HTML bufferInformacion, Cadena_IniOpe
+		Concatenar_Encabezado_HTML bufferInformacion, Comparador
+		Concatenar_Encabezado_HTML bufferInformacion, Cadena_FinOpe
+		xor di,di
+		pop di
+		push si
+		xor si, si
+		jmp XML_Encontrar_Etiqueta
+
+	menu_calc1:
+		pop si
+		Concatenar_Encabezado_HTML bufferInformacion, cadena_Operacion1
+		push si
+	jmp menu_calc
+
 	menu_calc:
+
 		print cadena_menucalc ;Imprime la cadena del menu de la calculadora
 		print cadena_ingresenum ;imprime la cadenna de ingrese numero
 		print saltolinea; imprime uns salto de linea
 		ObtenerTexto cadena_entrante ; captura la cadena entrante
 		EsNegativo cadena_entrante, Num1, Signo_Num1, temp ; determina si es + o - y asigna el signo
 		mov cadena_entrante[3], 36
+
+		pop si
 		Concatenar_Encabezado_HTML bufferInformacion, cadena_entrante
+		push si
+
 		print cadena_ingreseop
 		print saltolinea
 		getChar
 		mov ope[0], al
 		mov ope[1], 36
+
+		pop si
 		Concatenar_Encabezado_HTML bufferInformacion, ope
+		push si
+
 		;print ope		
 		jmp Comp_Operacion		
 
@@ -185,7 +393,11 @@ main proc
 		getChar
 		mov ope[0], al
 		mov ope[1], 36
+
+		pop si
 		Concatenar_Encabezado_HTML bufferInformacion, ope
+		push si
+
 		;print ope
 		jmp Comp_Operacion		
 		;jmp menu
@@ -195,13 +407,18 @@ main proc
 		print cadena_resultado
 		SignoToAscii Signo_Resultado
 
+		pop si
         Concatenar_Encabezado_HTML bufferInformacion, cadena_Tabla1
 		Concatenar_Encabezado_HTML bufferInformacion, Signo_Resultado
-				
+		push si
+
 		print Signo_Resultado
 		NumToAscii Resultado
+		
+		pop si
 		Concatenar_Encabezado_HTML bufferInformacion, Resultado
 		Concatenar_Encabezado_HTML bufferInformacion, cadena_Tabla2
+		push si
 
 		IncContador Contador_operaciones
 		mov al, Contador_operaciones
@@ -234,8 +451,11 @@ main proc
 		cmp al, 15
 		    je operacion15
 
-	Crear_Reporte: 
+	Crear_Reporte:
+		pop si 
 	    Concatenar_Encabezado_HTML bufferInformacion, cadena_reporte15
+		push si
+
 		crear bufferentrada, handlerentrada
 		escribir  handlerentrada, bufferInformacion, SIZEOF bufferInformacion
 		cerrar handlerentrada
@@ -268,7 +488,11 @@ main proc
 		ObtenerTexto cadena_entrante ; captura la cadena entrante
 		EsNegativo cadena_entrante, Num2, Signo_Num2, temp ; determina si es + o - y asigna el signo
 		Restar Num1, Signo_Num1, Num2, Signo_Num2, Resultado, Signo_Resultado, Cadena_Debu
+		
+		pop si
 		Concatenar_Encabezado_HTML bufferInformacion, cadena_entrante
+		push si
+		
 		IncContador contador_operandos
 		;SignoToAscii Signo_Resultado
 		;print Signo_Resultado
@@ -281,7 +505,11 @@ main proc
 		ObtenerTexto cadena_entrante ; captura la cadena entrante
 		EsNegativo cadena_entrante, Num2, Signo_Num2, temp ; determina si es + o - y asigna el signo
 		Sumar Num1, Signo_Num1, Num2, Signo_Num2, Resultado, Signo_Resultado
+		
+		pop si
 		Concatenar_Encabezado_HTML bufferInformacion, cadena_entrante
+		push si
+		
 		IncContador contador_operandos
 		;SignoToAscii Signo_Resultado
 		;print Signo_Resultado
@@ -296,7 +524,11 @@ main proc
 
 		Multi Num1, Num2, Resultado
 		Ley_Signos Signo_Num1, Signo_Num2, Signo_Resultado
+		
+		pop si
 		Concatenar_Encabezado_HTML bufferInformacion, cadena_entrante
+		push si
+		
 		IncContador contador_operandos
 		;SignoToAscii Signo_Resultado
 		;print Signo_Resultado
@@ -309,7 +541,11 @@ main proc
 		print saltolinea; imprime uns salto de linea
 		ObtenerTexto cadena_entrante ; captura la cadena entrante
 		EsNegativo cadena_entrante, Num2, Signo_Num2, temp ; determina si es + o - y asigna el signo
+		
+		pop si
 		Concatenar_Encabezado_HTML bufferInformacion, cadena_entrante
+		push si
+
 		IncContador contador_operandos
 		Divi Num1, Num2, Resultado
 		Ley_Signos Signo_Num1, Signo_Num2, Signo_Resultado
@@ -332,8 +568,17 @@ main proc
 	salir:
 		close
 
+	operacion1:
+		pop si
+	    Concatenar_Encabezado_HTML bufferInformacion, cadena_Operacion1
+		push si
+		jmp menu_calc
+
 	operacion2:
+		pop si
 	    Concatenar_Encabezado_HTML bufferInformacion, cadena_Operacion2
+		push si
+
 		print saltolinea
 		print cadena_guardar
 		print saltolinea
@@ -343,7 +588,10 @@ main proc
 		jmp menu
 
 	operacion3:
+		pop si
 	    Concatenar_Encabezado_HTML bufferInformacion, cadena_Operacion3
+		push si
+
 		print saltolinea
 		print cadena_guardar
 		print saltolinea
@@ -353,7 +601,10 @@ main proc
 		jmp menu
 
 	operacion4:
+		pop si
 	    Concatenar_Encabezado_HTML bufferInformacion, cadena_Operacion4
+		push si
+
 		print saltolinea
 		print cadena_guardar
 		print saltolinea
@@ -363,7 +614,10 @@ main proc
 		jmp menu
 
 	operacion5:
+		pop si
 	    Concatenar_Encabezado_HTML bufferInformacion, cadena_Operacion5
+		push si
+
 		print saltolinea
 		print cadena_guardar
 		print saltolinea
@@ -373,7 +627,10 @@ main proc
 		jmp menu
 
 	operacion6:
+		pop si
 	    Concatenar_Encabezado_HTML bufferInformacion, cadena_Operacion6
+		push si
+
 		print saltolinea
 		print cadena_guardar
 		print saltolinea
@@ -383,7 +640,10 @@ main proc
 		jmp menu
 
 	operacion7:
+		pop si
 	    Concatenar_Encabezado_HTML bufferInformacion, cadena_Operacion7
+		push si
+
 		print saltolinea
 		print cadena_guardar
 		print saltolinea
@@ -393,7 +653,10 @@ main proc
 		jmp menu
 
 	operacion8:
-	    Concatenar_Encabezado_HTML bufferInformacion, cadena_Operacion8
+	    pop si
+		Concatenar_Encabezado_HTML bufferInformacion, cadena_Operacion8
+		push si
+
 		print saltolinea
 		print cadena_guardar
 		print saltolinea
@@ -403,7 +666,10 @@ main proc
 		jmp menu
 
 	operacion9:
-	    Concatenar_Encabezado_HTML bufferInformacion, cadena_Operacion9
+	    pop si
+		Concatenar_Encabezado_HTML bufferInformacion, cadena_Operacion9
+		push si
+
 		print saltolinea
 		print cadena_guardar
 		print saltolinea
@@ -413,7 +679,9 @@ main proc
 		jmp menu
 
 	operacion10:
+		pop si
 	    Concatenar_Encabezado_HTML bufferInformacion, cadena_Operacion10
+		push si
 		print saltolinea
 		print cadena_guardar
 		print saltolinea
@@ -423,7 +691,9 @@ main proc
 		jmp menu
 
 	operacion11:
+		pop si
 	    Concatenar_Encabezado_HTML bufferInformacion, cadena_Operacion11
+		push si
 		print saltolinea
 		print cadena_guardar
 		print saltolinea
@@ -433,7 +703,9 @@ main proc
 		jmp menu
 
 	operacion12:
-	    Concatenar_Encabezado_HTML bufferInformacion, cadena_Operacion12
+	    pop si
+		Concatenar_Encabezado_HTML bufferInformacion, cadena_Operacion12
+		push si
 		print saltolinea
 		print cadena_guardar
 		print saltolinea
@@ -443,7 +715,9 @@ main proc
 		jmp menu
 
 	operacion13:
+		pop si
 	    Concatenar_Encabezado_HTML bufferInformacion, cadena_Operacion13
+		push si
 		print saltolinea
 		print cadena_guardar
 		print saltolinea
@@ -453,7 +727,9 @@ main proc
 		jmp menu
 
 	operacion14:
-	    Concatenar_Encabezado_HTML bufferInformacion, cadena_Operacion14
+	    pop si
+		Concatenar_Encabezado_HTML bufferInformacion, cadena_Operacion14
+		push si
 		print saltolinea
 		print cadena_guardar
 		print saltolinea
@@ -463,13 +739,27 @@ main proc
 		jmp menu
 
 	operacion15:
+		pop si
 	    Concatenar_Encabezado_HTML bufferInformacion, cadena_Operacion15
+		push si
 		print saltolinea
 		print cadena_guardar
 		print saltolinea
 		getChar		
 		cmp al, 115
 			;je Crear_Reporte
+		jmp menu
+
+	Error1:
+		print saltolinea
+		print err1
+		getChar
+		jmp menu
+	
+	Error5:
+		print saltolinea
+		print err5
+		getChar
 		jmp menu
 main endp
 end main

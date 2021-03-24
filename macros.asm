@@ -368,3 +368,43 @@ Concatenar_Encabezado_HTML macro destino, fuente
         jmp LeerCaracter        
     FinCadena:
 endm
+
+obtenerRuta macro buffer
+LOCAL ObtenerChar, endTexto
+	xor di,di ; xor di,di =	mov di,0
+	
+	ObtenerChar:
+		getChar
+		cmp al,0dh ; ascii de salto de linea en hexa
+		je endTexto
+		mov buffer[di],al ;mov destino, fuente
+		inc di ; di = di + 1
+		jmp ObtenerChar
+
+	endTexto:
+		mov al,00h ; asci del caracter nulo
+		mov buffer[di], al  
+endm
+
+abrir macro buffer,handler
+	mov ah,3dh ;funcion para abrir fichero 
+	mov al,02h ;010b Acceso de lectura/escritura. 010b 
+	lea dx,buffer ;carga la dirección de la fuente (buffer) a dx 
+	int 21h ;ejecutamos la interrupción 
+	jc Error1 ;salta el flag de acarreo = 1
+	mov handler,ax ;sino hay error  en ax devuelve un handle para acceder al fichero 
+endm
+
+leer macro handler,buffer, numbytes	
+	mov ah,3fh ;interrupción para leer 
+	mov bx,handler ;copiamos en bx el handler,referencia al fichero
+	mov cx,numbytes ;numero de bytes a leer, tamaño del arreglo que guarda el contenido 
+	lea dx,buffer ;carga la dirección de la variable buffer a dx
+	int 21h
+	jc  Error5
+	;en el buffer se guarda la información
+endm
+
+Concatenar_Operacion macro xml, cadena
+
+endm
