@@ -219,9 +219,11 @@ main proc
 
 
 	XML_Reporte_Operandos:
+		;xor si,si
+		;call XML_Realizar_Operaciones
 		xor si,si
 		pop si
-		push di	
+		push di;TENGO QUE MANDAR A LLAMAR UN PROCEDIMIENTO PARA EMPEZAR A HACER LOS OPERADORES	
 		Concatenar_Encabezado_HTML bufferInformacion, Etiqueta_operando
 		xor di,di
 		pop di
@@ -232,14 +234,16 @@ main proc
 		jmp XML_Reporte_Resultado
 
 	XML_Reporte_Resultado:
-		mov Debug[0],78
-		mov Debug[1],65
-		mov Debug[2],67
+		print cadena_resultado
+		SignoToAscii Signo_Resultado
+		print Signo_Resultado
+		NumToAscii Resultado
 		xor si,si
 		pop si
 		push di	
 		Concatenar_Encabezado_HTML bufferInformacion, cadena_Tabla1
-		Concatenar_Encabezado_HTML bufferInformacion, Debug
+		Concatenar_Encabezado_HTML bufferInformacion, Signo_Resultado
+		Concatenar_Encabezado_HTML bufferInformacion, Resultado
 		Concatenar_Encabezado_HTML bufferInformacion, cadena_Tabla2
 		xor di,di
 		pop di
@@ -835,4 +839,190 @@ main proc
 		getChar
 		jmp menu
 main endp
+
+
+XML_Realizar_Operaciones proc far
+	Proximo:
+		mov al, Etiqueta_operando[si]
+		cmp al,36
+			je Termino
+		cmp al,43
+			je Encontro_Suma
+		;mov Debug[0],al
+		;print Debug
+		inc si
+		jmp Proximo
+	
+	Encontro_Suma:
+		inc si
+		call XML_Realizar_Suma
+		jmp Proximo
+	
+	Termino:
+		ret
+XML_Realizar_Operaciones endp
+
+XML_Realizar_Suma proc far
+	valor1:
+		mov al, Etiqueta_operando[si]
+		cmp al,48 ;0
+			je Es_Numero1
+		cmp al,49 ;1
+			je Es_Numero1
+		cmp al,50 ;2
+			je Es_Numero1
+		cmp al,51 ;3
+			je Es_Numero1
+		cmp al,52 ;4
+			je Es_Numero1
+		cmp al,53 ;5
+			je Es_Numero1
+		cmp al,54 ;6
+			je Es_Numero1
+		cmp al,55 ;7
+			je Es_Numero1
+		cmp al,56 ;8
+			je Es_Numero1
+		cmp al,57 ;9
+			je Es_Numero1
+		jmp Anidada_Valor1
+		
+
+	Es_Numero1:
+		call XML_Encontrar_Valor
+		EsNegativo cadena_entrante, Num1, Signo_Num1, temp ; determina si es + o - y asigna el signo
+		;print Num1
+		jmp valor2
+
+	valor2:
+		mov al, Etiqueta_operando[si]
+		cmp al,48 ;0
+			je Es_Numero2
+		cmp al,49 ;1
+			je Es_Numero2
+		cmp al,50 ;2
+			je Es_Numero2
+		cmp al,51 ;3
+			je Es_Numero2
+		cmp al,52 ;4
+			je Es_Numero2
+		cmp al,53 ;5
+			je Es_Numero2
+		cmp al,54 ;6
+			je Es_Numero2
+		cmp al,55 ;7
+			je Es_Numero2
+		cmp al,56 ;8
+			je Es_Numero2
+		cmp al,57 ;9
+			je Es_Numero2
+		jmp Anidada_Valor2
+
+	Es_Numero2:
+		call XML_Encontrar_Valor
+		EsNegativo cadena_entrante, Num2, Signo_Num2, temp ; determina si es + o - y asigna el signo
+		;NumToAscii Num2
+		jmp Hacer_Suma
+
+	Hacer_Suma:
+		NumToAscii Num1
+		print saltolinea
+		NumToAscii Num2
+		print saltolinea
+		Sumar Num1, Signo_Num1, Num2, Signo_Num2, Resultado, Signo_Resultado
+		NumToAscii Resultado
+		jmp fin
+	
+	Anidada_Valor1:	
+		mov al, Etiqueta_operando[si]	
+		;mov Debug[0],al
+		;print Debug
+		call XML_Realizar_Operaciones
+		mov al, Resultado[0]
+		mov Num1[0], al
+		mov al, Resultado[1]
+		mov Num1[1], al
+		NumToAscii Num1
+		jmp valor2
+	
+	Anidada_Valor2:
+		mov al, Etiqueta_operando[si]	
+		;mov Debug[0],al
+		;print Debug
+		call XML_Realizar_Operaciones
+		mov al, Resultado[0]
+		mov Num2[0], al
+		mov al, Resultado[1]
+		mov Num2[1], al
+		;NumToAscii Num2
+		jmp Hacer_Suma
+	
+	fin:
+		ret
+XML_Realizar_Suma endp
+
+XML_Encontrar_Valor proc far
+	Proximo_caracter:
+		mov al, Etiqueta_operando[si]
+		cmp al,48 ;0
+			je NumeroDecenas
+		cmp al,49 ;1
+			je NumeroDecenas
+		cmp al,50 ;2
+			je NumeroDecenas
+		cmp al,51 ;3
+			je NumeroDecenas
+		cmp al,52 ;4
+			je NumeroDecenas
+		cmp al,53 ;5
+			je NumeroDecenas
+		cmp al,54 ;6
+			je NumeroDecenas
+		cmp al,55 ;7
+			je NumeroDecenas
+		cmp al,56 ;8
+			je NumeroDecenas
+		cmp al,57 ;9
+			je NumeroDecenas
+		;Aqui se debe de agregar las operaciones anidadas
+		jmp NumeroDecenas
+
+	NumeroDecenas:
+		mov cadena_entrante[0], al
+		inc si
+		;mov Debug[0],al
+		;print Debug
+		mov al, Etiqueta_operando[si]
+		cmp al,48 ;0
+			je NumeroUnidades
+		cmp al,49 ;1
+			je NumeroUnidades
+		cmp al,50 ;2
+			je NumeroUnidades
+		cmp al,51 ;3
+			je NumeroUnidades
+		cmp al,52 ;4
+			je NumeroUnidades
+		cmp al,53 ;5
+			je NumeroUnidades
+		cmp al,54 ;6
+			je NumeroUnidades
+		cmp al,55 ;7
+			je NumeroUnidades
+		cmp al,56 ;8
+			je NumeroUnidades
+		cmp al,57 ;9
+			je NumeroUnidades
+		jmp NumeroUnidades
+	
+	NumeroUnidades:
+		mov cadena_entrante[1], al
+		;print cadena_entrante
+		inc si
+		inc si
+		;mov al, Etiqueta_operando[si]
+		;mov Debug[0],al
+		;print Debug
+		ret
+XML_Encontrar_Valor endp
 end main
